@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import * as ImagePicker from 'expo-image-picker';
 import {
     StyleSheet,
     View,
@@ -12,20 +13,28 @@ import {
     Keyboard,
     TouchableWithoutFeedback,
     Dimensions,
+    Image,
 } from 'react-native';
+import { AntDesign } from '@expo/vector-icons';
 
 
 const initialState = {
+    avatar: null,
+    login: '',
     email: '',
     password: '',
 }
 
-export const LoginScreen = () => {
+export const RegistrationScreen = ({ navigation }) => {
+    // console.log('navigation:', navigation);
+    // console.log(Platform.OS);
     const [state, setState] = useState(initialState)
     const [isKeyboardShown, setIsKeyboardShown] = useState(true);
     const [isSecureText, setIsSecureText] = useState(true);
+    const [isActiveLogin, setIsActiveLogin] = useState(false);
     const [isActiveMail, setIsActiveMail] = useState(false);
     const [isActivePass, setIsActivePass] = useState(false);
+    const [avatar, setAvatar] = useState(null);
 
     const [widthDimensions, setWidthDimensions] = useState(
         Dimensions.get('window').width - 20 * 2,
@@ -46,20 +55,35 @@ export const LoginScreen = () => {
         };
     }, [isKeyboardShown]);
 
-    const handleSubmit = () => {
+    const handleSubmit = () => {    
         Keyboard.dismiss();
         // console.log(state);
-        console.log('email:', state.email, 'password:', state.password);
+        console.log('login:', state.login, 'email:', state.email, 'password:', state.password);
         // dispatch(authSignUpUser(state));
         setState(initialState);
+    };
+
+    const pickImage = async () => {
+        // No permissions request is necessary for launching the image library
+        let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.All,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+        });
+
+        if (!result.canceled) {
+        setAvatar(result.assets[0].uri);
+        console.log(avatar);
+        }
     };
 
     return (   
         <TouchableWithoutFeedback onPress={ Keyboard.dismiss}>
             <View style={styles.container}>
                 <ImageBackground
-                    source={require("../assets/background.jpg")}
-                    style={styles.background}
+                    source={require("../../assets/background.jpg")}
+                    style={styles.background}                      
                 >
                     <KeyboardAvoidingView
                         behavior={Platform.OS === 'ios' ? 'padding' : ''}
@@ -71,8 +95,49 @@ export const LoginScreen = () => {
                                 paddingBottom: isKeyboardShown ? 45 : 16,
                                 width: widthDimensions,
                         }}>
+                        
+                        {/* avatar   button add/delete avatar */}
+                            <View style={styles.avatar}>
+                                {Platform.OS === 'ios' ? 
+                                    avatar && (<Image source={{ cache: 'only-if-cached', uri: avatar }} style={styles.avatarImg} />) :
+                                    <Image source={{ cache: 'only-if-cached', uri: avatar }} style={styles.avatarImg} />}
+                                {avatar ? (
+                                        <TouchableOpacity activeOpacity={0.5} onPress={() => {setAvatar(null); }} >
+                                            <View style={styles.removeAvatarIcon}>
+                                                <View style={{ backgroundColor: '#fff', borderRadius: 50, }}>
+                                                    <AntDesign style={{ transform: [{ rotate: '45deg' }] }} name="closecircleo" color="#BDBDBD" size={25} />                                                    
+                                                </View>
+                                            </View>
+                                        </TouchableOpacity>
+                                        ) : (
+                                        <TouchableOpacity activeOpacity={0.5} onPress={pickImage}>
+                                            <View style={styles.addAvatarIcon}>
+                                                <View style={{ backgroundColor: '#fff', borderRadius: 50, }}>
+                                                    <AntDesign name="pluscircleo" color="#FF6C00" size={25} />
+                                                </View>
+                                            </View>
+                                        </TouchableOpacity>
+                                )}                                
+                            </View>                            
+
                             {/* title & inputs */}
-                            <Text style={styles.title}>Login</Text>
+
+                            <Text style={styles.title}>Registration</Text>
+                            <TextInput
+                                keyboardType="default"
+                                autoComplete="name"
+                                style={{
+                                    ...styles.input,
+                                    borderColor: isActiveLogin ? "#FF6C00" : "#E8E8E8",
+                                    backgroundColor: isActiveLogin ? "#FFFFFF" : "#F6F6F6",
+                                }}
+                                onFocus={() => setIsActiveLogin(true)}
+                                onBlur={() => setIsActiveLogin(false)}
+                                placeholder='Login'
+                                placeholderTextColor='#BDBDBD'
+                                value={state.login}
+                                onChangeText={(value) => setState((prevState) => ({...prevState, login: value}))}
+                            />
                             <TextInput
                                 keyboardType="email-address"
                                 autoComplete="email"
@@ -87,7 +152,8 @@ export const LoginScreen = () => {
                                 placeholderTextColor='#BDBDBD'
                                 value={state.email}
                                 onChangeText={(value) => setState((prevState) => ({...prevState, email: value}))}
-                            />                            
+                            />
+                            
                             {/* show / hide password */}
                             <View style={{position: 'relative'}}>
                                 <TextInput  
@@ -113,8 +179,8 @@ export const LoginScreen = () => {
                                         {isSecureText ? 'Show' : 'Hide'}
                                     </Text>                                        
                                 </Pressable>
-                            </View>         
-                            
+                            </View>
+                                
                         {/* registration button    link to LoginPage*/}                        
                         {isKeyboardShown ? ( 
                             <> 
@@ -123,14 +189,15 @@ export const LoginScreen = () => {
                                     style={styles.submitBtn}
                                     onPress={handleSubmit}
                                 >
-                                        <Text style={styles.submitBtnText}>SIGN IN</Text>
+                                        <Text style={styles.submitBtnText}>SIGN UP</Text>
                                 </TouchableOpacity>
                                 
-                                <Pressable style={styles.linkToLoginPage} 
-                                // onPress={() => navigation.navigate('Registration')}
+                                <TouchableOpacity  
+                                    activeOpacity={0.6}
+                                    onPress={() => navigation.navigate('Login')}
                                 >
-                                    <Text style={styles.linkToLoginPageText}>Don't have an account? Sign up</Text>
-                                </Pressable> 
+                                    <Text style={styles.linkToLoginPageText}>Already have an account, log in</Text>
+                                </TouchableOpacity> 
                                 <View style={styles.homeIndicator} /> 
                             </> ) : null } 
                         
@@ -166,14 +233,44 @@ const styles = StyleSheet.create({
         width: '100%',
         borderTopLeftRadius: 25,
         borderTopRightRadius: 25,
-        paddingHorizontal: 16,        
-    },   
+        paddingHorizontal: 16,  
+    },
+    avatar: {
+        position: 'absolute',
+        flexDirection: 'row',
+        alignItems: 'flex-end',
+        width: 120,
+        height: 120,
+        backgroundColor: '#F6F6F6',
+        borderRadius: 16,
+        marginTop: -60,
+        alignSelf: 'center',
+    },
+    avatarImg: {
+        width: 120,
+        height: 120,
+        borderRadius: 16,
+    },
+    removeAvatarIcon: {
+        // position: 'absolute',
+        padding: 10,
+        transform: [{ rotate: '45deg' }],
+        right: 22.5,
+        bottom: 4,
+    },
+    addAvatarIcon: {
+        // position: 'absolute',
+        padding: 10,
+        color: "#FF6C00",
+        right: Platform.OS === 'ios' ? -97 : 22.5,
+        bottom: 4,
+    },
     homeIndicator: {
         position: 'absolute',
         height: 5,
         width: 134,
         alignSelf: 'center',
-        bottom: 8,
+        bottom: 6,
         backgroundColor: '#212121',
         borderRadius: 100,
     },
@@ -181,8 +278,8 @@ const styles = StyleSheet.create({
         fontSize: 30,
         lineHeight: 35,
         letterSpacing: 0.72,
-        marginTop: 32,
-        marginBottom: 33,
+        marginTop: 82,
+        marginBottom: 22,
         textAlign: 'center',
         color: '#212121',
         fontFamily: 'Roboto-Medium',
@@ -229,6 +326,7 @@ const styles = StyleSheet.create({
         alignSelf: 'center',
     },
     linkToLoginPageText: {
+        alignSelf: 'center',
         fontSize: 16,
         color: '#1B4371',
         lineHeight: 19,
