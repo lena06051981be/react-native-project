@@ -56,7 +56,7 @@ export const useRoute = (isAuth, ) => {
                     tabBarStyle: {
                         paddingTop: 9,
                         height: 83,
-                        paddingHorizontal: 20, 
+                        paddingHorizontal: 20,                         
                         // width: 272,
                         // alignSelf: 'center',
                         // shadowColor: '#fff',

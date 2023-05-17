@@ -8,18 +8,23 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { Entypo } from '@expo/vector-icons';
 import { FontAwesome5 } from '@expo/vector-icons'; 
 import { Feather } from "@expo/vector-icons";
+import { TouchableWithoutFeedback } from "react-native";
+import { Keyboard } from "react-native";
+import { KeyboardAvoidingView } from "react-native";
+import { Platform } from "react-native";
 
 
 const CreateScreen = ({ navigation }) => {
     const [camera, setCamera] = useState(true);
     const [cameraPermission, setCameraPermission] = Camera.useCameraPermissions(null); 
-    const [type, setType] = useState(Camera.Constants.Type.back);   
+    const [cameraType, setCameraType] = useState(Camera.Constants.Type.back);
+    
     const [isActiveBtn, setIsActiveBtn] = useState(false)
     const [photo, setPhoto] = useState('');
-    const [location, setLocation] = useState({latitude: -90, longitude: 0});
-    const [title, setTitle] = useState(" ");
-    const [geocode, setGeocode] = useState(" ");
+    const [location, setLocation] = useState({latitude: -85, longitude: 0});
+    const [title, setTitle] = useState("");
     const [geoaddress, setGeoaddress] = useState('')
+    const [isKeyboardShown, setIsKeyboardShown] = useState(true);
     
     useEffect(() => {
         const getPermissions = async () => {
@@ -39,8 +44,19 @@ const CreateScreen = ({ navigation }) => {
             });
             console.log('Location', location);
         };
+        const showSubscription = Keyboard.addListener("keyboardDidShow", () => {
+            setIsKeyboardShown(false);
+        });
+
+        const hideSubscription = Keyboard.addListener("keyboardDidHide", () => {
+            setIsKeyboardShown(true);
+        });
         getPermissions();
-    }, []);
+        return () => {
+            showSubscription.remove();
+            hideSubscription.remove();
+        };        
+    }, [isKeyboardShown]);
     
     if (!cameraPermission) {
         // Camera permissions are still loading
@@ -50,7 +66,7 @@ const CreateScreen = ({ navigation }) => {
     if (!cameraPermission.granted) {
         // Camera permissions are not granted yet
         return (
-        <View style={styles.container}>
+        <View style={{...styles.container, alignItems: 'center', justifyContent: 'center'}}>
             <Text style={{ textAlign: "center" }}>
             We need your permission to show the camera
             </Text>
@@ -66,10 +82,11 @@ const CreateScreen = ({ navigation }) => {
     };
 
     const reverseGeocode = async () => {
-        try {let geocode = await Location.reverseGeocodeAsync({
-            latitude: location.latitude,
-            longitude: location.longitude,
-        });
+        try {
+                let geocode = await Location.reverseGeocodeAsync({
+                latitude: location.latitude,
+                longitude: location.longitude,
+            });
         console.log("Reverse Geocoded:");
             console.log('geocode', geocode);
             setGeoaddress(`${geocode[0].city}, ${geocode[0].country}, ${geocode[0].district}`)
@@ -79,7 +96,7 @@ const CreateScreen = ({ navigation }) => {
         }
     }
 
-    const handleGeocode = (text) => setGeocode(text);
+    const handleGeocode = (text) => setGeoaddress(text);
 
     const takePhoto = async () => {     
         try {
@@ -95,17 +112,18 @@ const CreateScreen = ({ navigation }) => {
     };
 
     const sendPhoto = () => {
+        Keyboard.dismiss();
         console.log('navigation', navigation);
         navigation.navigate('DefaultScreen', { photo, location, title, geoaddress })
     }
 
     const handleTypeOfCamera = () =>
-    setType(
-        type === Camera.Constants.Type.back
+    setCameraType(
+        cameraType === Camera.Constants.Type.back
             ? Camera.Constants.Type.front
             : Camera.Constants.Type.back
     );
-    // console.log('typeCamera:', type); 
+    // console.log('cameraType:', cameraType); 
     
     const deletePhoto = () => {
         setIsActiveBtn(false)
@@ -134,14 +152,16 @@ const CreateScreen = ({ navigation }) => {
  
 
     return (
-    <>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Create Post</Text>
-        </View>
-        <ScrollView style={styles.wrapper}>
-            <View style={styles.container}>
+    <TouchableWithoutFeedback onPress={ Keyboard.dismiss} >    
+        <KeyboardAvoidingView style={{flex: 1,  backgroundColor: '#fff',}} behavior={Platform.OS === 'ios' ? 'padding' : ''}>
+        <ScrollView  >            
+                <View style={styles.header}>
+                    <Text style={styles.headerTitle}>Create Post</Text>
+                </View> 
+            <View style={styles.container}>                               
                 <View style={styles.cameraOver} >
-                    <Camera style={styles.camera} ref={setCamera} type={type} >
+                    {/* <TouchableWithoutFeedback onPress={ Keyboard.dismiss}> */}
+                    <Camera style={styles.camera} ref={setCamera} type={cameraType} >
                         {photo && (
                         <View style={styles.takePhotoContainer}>
                             <Image source={{uri: photo}} style={{ height: '100%', width: '100%'}} />                                      
@@ -164,8 +184,10 @@ const CreateScreen = ({ navigation }) => {
                                 <MaterialIcons name="delete" size={24} color="black" />
                             </TouchableOpacity>)} 
                     </Camera>
-                </View>
+                    {/* </TouchableWithoutFeedback> */}
+                </View>               
                 <TextInput
+                    keyboardType="default"
                     placeholder="Name..."
                     placeholderTextColor="#BDBDBD"
                     style={styles.pictureName}
@@ -174,6 +196,7 @@ const CreateScreen = ({ navigation }) => {
                 />
                 <View style={styles.locationSection}>
                     <TextInput
+                        keyboardType="default"
                         onLongPress={reverseGeocode}
                         onChangeText={handleGeocode}
                         placeholder="Location..."
@@ -211,18 +234,19 @@ const CreateScreen = ({ navigation }) => {
                     style={{...styles.delete,  }}
                 >
                     <Feather name="trash-2" size={24} color={isActiveBtn ? "#212121" : "#BDBDBD"} />
-                </TouchableOpacity> */}  
+                </TouchableOpacity> */}
             </View>
         </ScrollView>
-    </>
+        </KeyboardAvoidingView>
+    </TouchableWithoutFeedback>
     );
 };
 
 const styles = StyleSheet.create({
-    wrapper: {
-        flex: 1,
-        backgroundColor: '#fff',
-    },
+    // wrapper: {
+    //     flex: 1,
+    //     backgroundColor: '#fff',
+    // },
     container: {
         flex: 1,
         backgroundColor: '#fff',
