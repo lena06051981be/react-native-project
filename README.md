@@ -12,4 +12,4 @@ https://expo.dev/@lena06051981be/react-native-photo-notes
 ✔.
 or scan QR-code here:
 
-![QR-code for Andriod](https://github.com/lena06051981be/react-native-project/tree/main/assets/QR_code_android.jpg)
+![QR-code for Andriod](https://github.com/lena06051981be/react-native-project/blob/main/assets/QR_code_android.jpg)
