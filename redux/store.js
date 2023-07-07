@@ -6,6 +6,7 @@ import { authSlice } from "./auth/authSlice";
 // });
 
 export const store = configureStore({
+    // reducer: rootReduce,
     reducer: {
         [authSlice.name]: authSlice.reducer,
     }
